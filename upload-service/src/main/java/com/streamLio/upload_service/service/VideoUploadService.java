@@ -1,4 +1,5 @@
 package com.streamLio.upload_service.service;
+import com.streamLio.upload_service.Model.EncodingJob;
 import com.streamLio.upload_service.dto.ChunkUploadResponse;
 import com.streamLio.upload_service.dto.UploadCompletionResponse;
 import com.streamLio.upload_service.dto.UploadInitiationResponse;
@@ -24,6 +25,12 @@ public class VideoUploadService {
 
     @Value("${upload.chunk.size}")
     private long chunkSize;
+
+    private JobService jobService;
+
+    public VideoUploadService(JobService jobService){
+        this.jobService = jobService;
+    }
 
     // In-memory tracking (replace with Redis in production)
     private final Map<String, UploadSession> uploadSessions = new ConcurrentHashMap<>();
@@ -147,6 +154,8 @@ public class VideoUploadService {
         // Update session
         session.setStatus(UploadStatus.COMPLETED);
         uploadSessions.put(uploadId, session);
+
+        EncodingJob job = jobService.createEncodingJob(finalPath.toString());
 
         return new UploadCompletionResponse(
                 uploadId,
